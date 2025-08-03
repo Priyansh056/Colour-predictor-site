@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Predictor Pro</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #e74c3c, #2ecc71, #9b59b6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    h2 {
+      color: #2c3e50;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 16px;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .color-buttons {
+      display: flex;
+      gap: 15px;
+      margin: 25px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .color-btn {
+      padding: 15px 25px;
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      min-width: 100px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .color-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .color-btn:hover::before {
+      left: 100%;
+    }
+
+    .color-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .color-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .color-btn.selected {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5), 0 8px 25px rgba(0, 0, 0, 0.3);
+      animation: selectedPulse 0.6s ease-out;
+    }
+
+    @keyframes selectedPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1.05); }
+    }
+
+    .red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .green { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .violet { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+
+    .play-section {
+      margin: 30px 0;
+    }
+
+    .play-btn {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      padding: 16px 40px;
+      border: none;
+      border-radius: 50px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(52, 152, 219, 0.6);
+    }
+
+    .play-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .timer-section {
+      background: linear-gradient(135deg, #34495e, #2c3e50);
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      margin: 25px 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .timer {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .timer-label {
+      font-size: 14px;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .result {
+      margin: 25px 0;
+      font-size: 20px;
+      font-weight: 600;
+      padding: 20px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result.win {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: white;
+      animation: winAnimation 0.6s ease-out;
+    }
+
+    .result.lose {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white;
+      animation: loseAnimation 0.6s ease-out;
+    }
+
+    .result.selected {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+    }
+
+    @keyframes winAnimation {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes loseAnimation {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .history-section {
+      background: rgba(236, 240, 241, 0.8);
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 25px;
+    }
+
+    .history-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .history-items {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+
+    .history-item {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      animation: fadeIn 0.3s ease-out;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .R { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .G { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .V { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #7f8c8d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .multiplier-section {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      margin: 20px 0;
+      box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+    }
+
+    .multiplier-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .multiplier-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .multiplier-btn {
+      padding: 8px 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .multiplier-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .multiplier-btn.active {
+      background: white;
+      color: #f39c12;
+      transform: scale(1.05);
+    }
+
+    .streak-display {
+      background: linear-gradient(135deg, #8e44ad, #9b59b6);
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 15px 0;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+    }
+
+    .streak-number {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .streak-label {
+      font-size: 12px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .achievement-popup {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      transform: translateX(400px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      max-width: 300px;
+    }
+
+    .achievement-popup.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .achievement-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .achievement-desc {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .sound-controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .sound-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      color: #2c3e50;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .sound-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .probability-display {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      gap: 10px;
+    }
+
+    .prob-item {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .prob-color {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .prob-percentage {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .hot-cold-indicator {
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .hot {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white;
+    }
+
+    .cold {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+    }
+
+    .neutral {
+      background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+      color: white;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 30px 20px;
+        margin: 10px;
+      }
+      
+      .color-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .color-btn {
+        width: 100%;
+        max-width: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sound-controls">
+      <button class="sound-btn" onclick="toggleSound()" id="soundBtn">🔊</button>
+    </div>
+    
+    <h2>🎯 Color Predictor Pro</h2>
+    <p class="subtitle">Predict the next color and test your luck!</p>
+    
+    <div class="streak-display">
+      <div class="streak-number" id="streakCount">0</div>
+      <div class="streak-label">Current Streak</div>
+    </div>
+    
+    <div class="multiplier-section">
+      <div class="multiplier-title">🎲 Bet Multiplier</div>
+      <div class="multiplier-buttons">
+        <button class="multiplier-btn active" onclick="setMultiplier(1, this)">1x</button>
+        <button class="multiplier-btn" onclick="setMultiplier(2, this)">2x</button>
+        <button class="multiplier-btn" onclick="setMultiplier(5, this)">5x</button>
+        <button class="multiplier-btn" onclick="setMultiplier(10, this)">10x</button>
+      </div>
+    </div>
+    
+    <div class="color-buttons">
+      <button class="color-btn red" onclick="selectColor('Red', this)">Red</button>
+      <button class="color-btn green" onclick="selectColor('Green', this)">Green</button>
+      <button class="color-btn violet" onclick="selectColor('Violet', this)">Violet</button>
+    </div>
+    
+    <div class="probability-display" id="probabilityDisplay">
+      <div class="prob-item">
+        <div class="prob-color" style="color: #e74c3c;">Red</div>
+        <div class="prob-percentage" id="redProb">33%</div>
+      </div>
+      <div class="prob-item">
+        <div class="prob-color" style="color: #2ecc71;">Green</div>
+        <div class="prob-percentage" id="greenProb">33%</div>
+      </div>
+      <div class="prob-item">
+        <div class="prob-color" style="color: #9b59b6;">Violet</div>
+        <div class="prob-percentage" id="violetProb">33%</div>
+      </div>
+    </div>
+    
+    <div class="hot-cold-indicator neutral" id="trendIndicator">
+      🌡️ Neutral Trend
+    </div>
+    
+    <div class="play-section">
+      <button class="play-btn" onclick="playGame()" id="playButton">Play Now</button>
+    </div>
+    
+    <div class="timer-section">
+      <div class="timer" id="timer">10</div>
+      <div class="timer-label">Next auto round</div>
+    </div>
+    
+    <div class="result" id="resultBox">Select a color to start playing!</div>
+    
+    <div class="history-section">
+      <div class="history-title">Recent Results</div>
+      <div class="history-items" id="historyBox"></div>
+    </div>
+    
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-number" id="totalGames">0</div>
+        <div class="stat-label">Games</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="winCount">0</div>
+        <div class="stat-label">Wins</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="winRate">0%</div>
+        <div class="stat-label">Win Rate</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="totalScore">0</div>
+        <div class="stat-label">Score</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="achievement-popup" id="achievementPopup">
+    <div class="achievement-title" id="achievementTitle">🏆 Achievement Unlocked!</div>
+    <div class="achievement-desc" id="achievementDesc">You got your first win!</div>
+  </div>
+
+  <script>
+    let userChoice = null;
+    let selectedButton = null;
+    let history = [];
+    let countdown = 10;
+    let totalGames = 0;
+    let wins = 0;
+    let currentStreak = 0;
+    let maxStreak = 0;
+    let totalScore = 0;
+    let currentMultiplier = 1;
+    let selectedMultiplierBtn = null;
+    let soundEnabled = true;
+    let colorStats = { Red: 0, Green: 0, Violet: 0 };
+    
+    let timerDisplay = document.getElementById("timer");
+    let resultBox = document.getElementById("resultBox");
+    let historyBox = document.getElementById("historyBox");
+    let playButton = document.getElementById("playButton");
+
+    // Sound effects using Web Audio API
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(frequency, duration, type = 'sine') {
+      if (!soundEnabled) return;
+      
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      oscillator.type = type;
+      
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+      
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration);
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
+      playSound(soundEnabled ? 800 : 400, 0.1);
+    }
+
+    function setMultiplier(multiplier, buttonElement) {
+      if (selectedMultiplierBtn) {
+        selectedMultiplierBtn.classList.remove('active');
+      }
+      
+      currentMultiplier = multiplier;
+      selectedMultiplierBtn = buttonElement;
+      buttonElement.classList.add('active');
+      playSound(600, 0.1);
+    }
+
+    function selectColor(color, buttonElement) {
+      // Remove previous selection
+      if (selectedButton) {
+        selectedButton.classList.remove('selected');
+      }
+      
+      // Set new selection
+      userChoice = color;
+      selectedButton = buttonElement;
+      buttonElement.classList.add('selected');
+      
+      resultBox.innerText = `Ready to play ${color} with ${currentMultiplier}x multiplier!`;
+      resultBox.className = 'result selected';
+      
+      // Enable play button
+      playButton.disabled = false;
+      playSound(500, 0.15);
+    }
+
+    function calculateProbabilities() {
+      if (history.length === 0) {
+        return { Red: 33, Green: 33, Violet: 33 };
+      }
+      
+      const recentHistory = history.slice(0, 6); // Last 6 results
+      const total = recentHistory.length;
+      const counts = { R: 0, G: 0, V: 0 };
+      
+      recentHistory.forEach(color => counts[color]++);
+      
+      // Calculate inverse probability (colors that appeared less get higher probability)
+      const redProb = Math.max(10, 50 - (counts.R / total) * 40);
+      const greenProb = Math.max(10, 50 - (counts.G / total) * 40);
+      const violetProb = Math.max(10, 50 - (counts.V / total) * 40);
+      
+      return { Red: Math.round(redProb), Green: Math.round(greenProb), Violet: Math.round(violetProb) };
+    }
+
+    function updateProbabilities() {
+      const probs = calculateProbabilities();
+      document.getElementById('redProb').innerText = probs.Red + '%';
+      document.getElementById('greenProb').innerText = probs.Green + '%';
+      document.getElementById('violetProb').innerText = probs.Violet + '%';
+    }
+
+    function updateTrendIndicator() {
+      if (history.length === 0) return;
+      
+      const recent = history.slice(0, 3);
+      const redCount = recent.filter(c => c === 'R').length;
+      
+      const indicator = document.getElementById('trendIndicator');
+      
+      if (redCount >= 2) {
+        indicator.className = 'hot-cold-indicator hot';
+        indicator.innerHTML = '🔥 Red is Hot!';
+      } else if (recent.filter(c => c === 'V').length >= 2) {
+        indicator.className = 'hot-cold-indicator cold';
+        indicator.innerHTML = '❄️ Violet is Cold!';
+      } else {
+        indicator.className = 'hot-cold-indicator neutral';
+        indicator.innerHTML = '🌡️ Neutral Trend';
+      }
+    }
+
+    function showAchievement(title, description) {
+      const popup = document.getElementById('achievementPopup');
+      document.getElementById('achievementTitle').innerText = title;
+      document.getElementById('achievementDesc').innerText = description;
+      
+      popup.classList.add('show');
+      playSound(800, 0.3, 'triangle');
+      
+      setTimeout(() => {
+        popup.classList.remove('show');
+      }, 3000);
+    }
+
+    function checkAchievements() {
+      if (wins === 1) {
+        showAchievement('🎯 First Win!', 'You got your first prediction right!');
+      } else if (currentStreak === 3) {
+        showAchievement('🔥 Hot Streak!', 'Three wins in a row!');
+      } else if (currentStreak === 5) {
+        showAchievement('⚡ Lightning Round!', 'Five consecutive wins!');
+      } else if (currentStreak === 10) {
+        showAchievement('🏆 Master Predictor!', 'Ten wins in a row - incredible!');
+      } else if (totalGames === 10) {
+        showAchievement('🎮 Dedicated Player!', 'You\'ve played 10 games!');
+      } else if (totalScore >= 100) {
+        showAchievement('💰 High Roller!', 'You\'ve scored over 100 points!');
+      }
+    }
+
+    function playGame() {
+      if (!userChoice) {
+        resultBox.innerText = 'Please select a color first!';
+        resultBox.className = 'result';
+        return;
+      }
+
+      const colors = ['Red', 'Green', 'Violet'];
+      const colorShort = { Red: 'R', Green: 'G', Violet: 'V' };
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      
+      totalGames++;
+      colorStats[randomColor]++;
+      const isWin = userChoice === randomColor;
+      
+      if (isWin) {
+        wins++;
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+        totalScore += currentMultiplier * 10;
+        playSound(800, 0.5, 'triangle');
+      } else {
+        currentStreak = 0;
+        playSound(200, 0.3, 'sawtooth');
+      }
+      
+      let result = isWin ? 
+        `🎉 You Win! +${currentMultiplier * 10} pts! Color: ${randomColor}` : 
+        `💔 You Lose! The color was ${randomColor}`;
+      
+      resultBox.innerText = result;
+      resultBox.className = isWin ? 'result win' : 'result lose';
+      
+      // Update history
+      history.unshift(colorShort[randomColor]);
+      if (history.length > 12) history.pop();
+      
+      updateHistory();
+      updateStats();
+      updateProbabilities();
+      updateTrendIndicator();
+      checkAchievements();
+      
+      // Reset selection
+      if (selectedButton) {
+        selectedButton.classList.remove('selected');
+        selectedButton = null;
+      }
+      userChoice = null;
+      
+      // Reset countdown
+      countdown = 10;
+    }
+
+    function updateHistory() {
+      historyBox.innerHTML = history.map(color => 
+        `<div class="history-item ${color}">${color}</div>`
+      ).join('');
+    }
+
+    function updateStats() {
+      document.getElementById('totalGames').innerText = totalGames;
+      document.getElementById('winCount').innerText = wins;
+      document.getElementById('totalScore').innerText = totalScore;
+      document.getElementById('streakCount').innerText = currentStreak;
+      const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+      document.getElementById('winRate').innerText = winRate + '%';
+    }
+
+    // Auto play every 10 seconds
+    setInterval(() => {
+      if (userChoice) {
+        playGame();
+      }
+      countdown = 10;
+    }, 10000);
+
+    // Timer countdown
+    setInterval(() => {
+      countdown--;
+      if (countdown < 0) countdown = 10;
+      timerDisplay.innerText = countdown;
+      
+      // Add urgency effect when countdown is low
+      if (countdown <= 3) {
+        timerDisplay.style.color = '#e74c3c';
+        timerDisplay.style.animation = 'pulse 0.5s ease-in-out';
+        if (countdown === 1) playSound(1000, 0.1);
+      } else {
+        timerDisplay.style.color = 'white';
+        timerDisplay.style.animation = 'none';
+      }
+    }, 1000);
+
+    // Initialize
+    updateHistory();
+    updateStats();
+    updateProbabilities();
+    selectedMultiplierBtn = document.querySelector('.multiplier-btn.active');
+  </script>
+</body>
+</html>
